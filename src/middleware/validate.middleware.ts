@@ -17,7 +17,7 @@ export function validate(schema: ZodSchema, source: 'body' | 'query' | 'params' 
       }));
       const primaryMessage = details[0].message;
       return res.status(400).json({
-        error: "Validation Error",
+        error: primaryMessage,
         message: primaryMessage,
         details,
       });

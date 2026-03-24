@@ -52,16 +52,24 @@ export class PredictionService {
         const decimalAmount = toDecimal(amount);
         const amountNum = toNumber(decimalAmount);
 
-        // 3. Check user exists and has sufficient balance, then deduct atomically
-        const existingUser = await tx.user.findUnique({ where: { id: userId } });
-        if (!existingUser) {
-          throw new Error("User not found");
-        }
-        if (toNumber(toDecimal(existingUser.virtualBalance)) < amountNum) {
-          throw new Error("Insufficient balance");
-        }
+        // 3. Update user balance ATOMICALLY with sufficiency check
+        // This prevents race conditions where balance is checked then deducted
+        const user = await tx.user.update({
+          where: {
+            id: userId,
+            virtualBalance: { gte: amountNum },
+          },
+          data: {
+            virtualBalance: { decrement: amountNum },
+          },
+        }).catch((err: any) => {
+          if (err.code === "P2025") {
+            throw new Error("Insufficient balance");
+          }
+          throw err;
+        });
 
-        // 4. Check mode-specific requirements before deducting balance
+        // 4. Validate mode-specific requirements
         if (round.mode === "UP_DOWN" && !side) {
           throw new Error("Side (UP/DOWN) is required for UP_DOWN mode");
         }
@@ -78,14 +86,7 @@ export class PredictionService {
           throw new Error("Invalid price range");
         }
 
-        const user = await tx.user.update({
-          where: { id: userId },
-          data: {
-            virtualBalance: { decrement: amountNum },
-          },
-        });
-
-        // 4. Create prediction record
+        // 5. Create prediction record
         const prediction = await tx.prediction.create({
           data: {
             roundId,
@@ -96,7 +97,7 @@ export class PredictionService {
           },
         });
 
-        // 5. Update round pools
+        // 6. Update round pools
         if (round.mode === "UP_DOWN") {
           await tx.round.update({
             where: { id: roundId },
