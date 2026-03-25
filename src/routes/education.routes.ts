@@ -6,6 +6,7 @@ import {
 } from "../types/education.types";
 import educationTipService from "../services/education-tip.service";
 import logger from "../utils/logger";
+import { cacheJsonResponse } from "../middleware/cache.middleware";
 
 const router = Router();
 
@@ -211,7 +212,13 @@ const educationGuides: EducationGuide[] = [
  * Returns a structured list of educational guides and tips
  * Content is grouped by category (volatility, Stellar, oracles)
  */
-router.get("/guides", (req: Request, res: Response) => {
+router.get(
+  "/guides",
+  cacheJsonResponse({
+    namespace: "education-guides",
+    ttlSeconds: parseInt(process.env.EDUCATION_GUIDES_CACHE_TTL_SECONDS || "86400", 10),
+  }),
+  (req: Request, res: Response) => {
   try {
     // Group guides by category
     const categories = {
