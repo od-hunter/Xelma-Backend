@@ -76,12 +76,15 @@ describe('Rounds Routes - Mode Validation (Issue #63)', () => {
     );
 
     mockResolveRound.mockResolvedValue({
-      id: 'round-resolved-id',
-      status: 'RESOLVED',
-      startPrice: 0.1234,
-      endPrice: 0.1301,
-      resolvedAt: new Date(),
-      predictions: [{ won: true }, { won: false }],
+      outcome: 'UPDATED',
+      round: {
+        id: 'round-resolve-id',
+        status: 'RESOLVED',
+        startPrice: 0.1234,
+        endPrice: 0.1301,
+        resolvedAt: new Date(),
+        predictions: [{ won: true }, { won: false }],
+      },
     });
   });
 

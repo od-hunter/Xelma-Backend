@@ -4,17 +4,13 @@ import websocketService from "./websocket.service";
 import notificationService from "./notification.service";
 import logger from "../utils/logger";
 import { prisma } from "../lib/prisma";
-<<<<<<< HEAD
 import { ConflictError, ValidationError } from "../utils/errors";
+import { RoundLifecycleOutcome } from "../types/round.types";
 
 interface LegendsPriceRange {
   min: number;
   max: number;
 }
-=======
-import { ConflictError } from "../utils/errors";
-import { RoundLifecycleOutcome } from "../types/round.types";
->>>>>>> main
 
 export class RoundService {
   /**

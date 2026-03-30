@@ -16,6 +16,7 @@ import {
 } from "../utils/decimal.util";
 import { Decimal } from "@prisma/client/runtime/library";
 import { ValidationError } from "../utils/errors";
+import { RoundLifecycleOutcome } from "../types/round.types";
 
 interface PriceRange {
   min: number;
@@ -23,7 +24,6 @@ interface PriceRange {
   pool: number;
 }
 
-<<<<<<< HEAD
 function isValidRange(range: any): range is PriceRange {
   return (
     range &&
@@ -32,9 +32,6 @@ function isValidRange(range: any): range is PriceRange {
     range.min < range.max
   );
 }
-=======
-import { RoundLifecycleOutcome } from "../types/round.types";
->>>>>>> main
 
 export class ResolutionService {
   /**

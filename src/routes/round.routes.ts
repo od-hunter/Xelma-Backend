@@ -265,7 +265,7 @@ router.post(
 
       if (mode === GameMode.LEGENDS) {
         const ranges = Array.isArray(round.priceRanges)
-          ? (round.priceRanges as LegendsPriceRange[])
+          ? (round.priceRanges as unknown as LegendsPriceRange[])
           : [];
         const validRange = ranges.find(
           (r) =>
@@ -412,50 +412,25 @@ router.post(
         });
       }
 
-<<<<<<< HEAD
-      if (round.status !== "ACTIVE") {
-        return res.status(400).json({
-          error: "Invalid Round",
-          message: "Round is not active for resolution",
-        });
+      if (lifecycleOutcome === RoundLifecycleOutcome.NO_OP && round.status !== "RESOLVED") {
+          return res.status(400).json({
+            error: "Invalid Round",
+            message: "Round is not in a state that can be resolved",
+          });
       }
 
-      const finalPriceNum = parseFloat(finalPrice);
-
-      if (mode === GameMode.UP_DOWN) {
-        // Call Soroban contract to resolve
-        try {
-          await sorobanService.resolveRound(
-            finalPriceNum,
-            0,
-            BigInt(Math.floor(Date.now() / 1000)),
-          );
-        } catch (e) {
-          logger.warn(
-            "Soroban resolveRound failed, proceeding with DB-only resolution:",
-            e,
-          );
-        }
-      }
-
-      const updatedRound = await prisma.round.update({
-        where: { id: roundId },
-        data: {
-          endPrice: finalPriceNum,
-          status: "RESOLVED",
-        },
+      const predictions = await prisma.prediction.findMany({
+        where: { roundId },
       });
 
-      // Invalidate leaderboard cache after resolution.
-      void invalidateNamespace("leaderboard");
-
+      // Calculate outcome for response based on prices
       let outcome: BetSide | null = null;
       let winningRange: { min: number; max: number } | null = null;
 
       if (mode === GameMode.UP_DOWN) {
-        if (finalPriceNum > toNumber(round.startPrice)) {
+        if (toNumber(round.endPrice || 0) > toNumber(round.startPrice)) {
           outcome = BetSide.UP;
-        } else if (finalPriceNum < toNumber(round.startPrice)) {
+        } else if (toNumber(round.endPrice || 0) < toNumber(round.startPrice)) {
           outcome = BetSide.DOWN;
         }
       } else {
@@ -479,25 +454,6 @@ router.post(
         if (resolvedRange) {
           winningRange = { min: resolvedRange.min, max: resolvedRange.max };
         }
-=======
-      if (lifecycleOutcome === RoundLifecycleOutcome.NO_OP && round.status !== "RESOLVED") {
-          return res.status(400).json({
-            error: "Invalid Round",
-            message: "Round is not in a state that can be resolved",
-          });
->>>>>>> main
-      }
-
-      const predictions = await prisma.prediction.findMany({
-        where: { roundId },
-      });
-
-      // Calculate outcome for response based on prices
-      let outcome: BetSide | null = null;
-      if (toNumber(round.endPrice || 0) > toNumber(round.startPrice)) {
-        outcome = BetSide.UP;
-      } else if (toNumber(round.endPrice || 0) < toNumber(round.startPrice)) {
-        outcome = BetSide.DOWN;
       }
 
       // Map BetSide to PredictionSide for comparison
